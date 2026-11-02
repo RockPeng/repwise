@@ -22,28 +22,28 @@ stored content and nothing on it writes.
 
 ## Code inspected
 
-- `sanity/lib/queries.ts` — `COURSE_BY_SLUG_QUERY` already projects everything this page needs
-  (card fields, `moduleCount`, `lessonCount`, `durationSeconds`, `learningOutcomes`,
-  `instructorDetail`, `modules[]` with per-module `durationSeconds` and dereferenced lessons), plus
-  `COURSE_SLUGS_QUERY` for `generateStaticParams`. **No query changes needed.**
+- `sanity/lib/queries.ts` — `COURSE_BY_SLUG_QUERY` projects the course and dereferenced lessons.
+  Add `lessonCount` and per-module `durationSeconds`; `COURSE_SLUGS_QUERY` supports
+  `generateStaticParams`.
 - `sanity/lib/fetch.ts` — `sanityFetch({query, params, tags})`, `CACHE_TAGS`.
 - `sanity/lib/client.ts`, `sanity/lib/token.ts` — server-only, token-authenticated, `server-only`.
 - `sanity/lib/image.ts` — `urlFor()`.
-- `sanity.types.ts` — already current: `COURSE_BY_SLUG_QUERY_RESULT` and the `SanityQueries` type map
-  are generated, so `client.fetch` is typed off `defineQuery` with no manual result types.
-  `studio/sanity.cli.ts` points typegen at `../{app,components,lib,sanity}/**` and writes
-  `../sanity.types.ts`; re-running `npm --prefix studio run typegen` is a no-op here.
+- `sanity.types.ts` — `COURSE_BY_SLUG_QUERY_RESULT` and the `SanityQueries` type map are generated
+  from `defineQuery`. `studio/sanity.cli.ts` points typegen at `../{app,components,lib,sanity}/**`
+  and writes `../sanity.types.ts`; regenerate after changing the query.
 - `studio/schemaTypes/documents/course.ts`, `objects/module.ts`, `objects/learningOutcome.ts`,
-  `documents/lesson.ts` — field shapes; `learningOutcome.icon` is constrained to eight names
-  (`sparkles, layers, code, rocket, shield, gauge, puzzle, workflow`).
-- `studio/scripts/seed/content.mjs` + `seed.ndjson` — 10 courses, 4 modules × 3 lessons each,
-  cover images uploaded to the Sanity CDN, outcome icons drawn only from the eight allowed names.
+  `documents/lesson.ts` — field shapes; schema outcome icons use eleven PascalCase names. The seed
+  includes lowercase aliases such as `layers`, `workflow`, `gauge`, and `rocket`; the UI maps both.
+- `scripts/seed/seed.ndjson` — the sample Next.js course has four modules with three lessons each,
+  a Sanity CDN cover image, and four learning outcomes. Its title is “Next.js App Router in Depth”,
+  rather than the screenshot’s “Next.js for Production”; content remains Sanity-driven.
 - `components/layout/page-frame.tsx`, `layout/site-header.tsx`, `nav/breadcrumbs.tsx`,
   `ui/button.tsx` (`buttonClasses` for `next/link`), `ui/badge.tsx`, `ui/progress-bar.tsx`,
   `ui/card.tsx`, `home/chart-decoration.tsx`, `lib/utils.ts` — all reused as-is.
 - `app/globals.css` — Tailwind v4 `@theme` tokens and the `@utility` type scale.
-- `app/page.tsx` — home page links courses to `/courses/<slug>`, which this route answers.
-- `next.config.ts` — empty; no `images.remotePatterns` yet.
+- `app/page.tsx` — the home page currently contains static sample cards; changing the catalog is
+  out of scope for this detail-page route.
+- `next.config.ts` — add a `cdn.sanity.io` `images.remotePatterns` entry for the seeded cover.
 
 ## Measurements taken from the reference
 
@@ -87,38 +87,39 @@ content column. Outer frame and header come from the existing `PageFrame` / `Sit
    alone and derives its course by reverse reference.
 3. **Module and lesson numbers are derived from array order** (§7), never stored: module index + 1,
    lesson label `"{module}.{lesson}"`.
-4. **Icons stay inside the schema's eight allowed names.** The reference happens to show a database
-   and a cloud glyph, which the schema does not offer and no seeded course uses; adding them would
-   be a schema change, so the icon map covers exactly the eight allowed values and falls back to
-   `Sparkles`. Flagged under "Needs your attention".
+4. **Icons use a lookup map.** The schema defines eleven PascalCase icon names, while seeded
+   outcome values include lowercase aliases. The map handles both without changing the schema
+   and falls back to `Sparkles` for unknown values.
 5. **The instructor is not rendered.** The reference has no instructor on this page, and §3 makes
    the reference the source of truth for visuals. Flagged under "Needs your attention".
 6. **Accordion is a client component**; the page stays a server component and passes plain data
    down. Rows expand to reveal that module's lessons (number, title, duration, free-preview badge)
    as links. The reference only shows the collapsed state, so the expanded row is built from the
    existing design-system primitives.
-7. **"Show all N modules" only renders when a course has more than six modules.** The seeded courses
-   have four, so the toggle will not appear against seeded data — the reference shows twelve.
-8. Seeded cover images are photographs, not the reference's black Next.js tile, so the hero art will
-   look different from the mock. That is content, not layout.
-9. **Typegen is re-run as a check**, not a change: `sanity.types.ts` was already up to date with the
-   queries, so the page compiles against the generated projection type and the file is untouched.
+7. **"Show all N modules" only renders when a course has more than six modules.** The selected seed
+   has four, so the toggle is absent against seeded data.
+8. The seeded cover image and title differ from the screenshot’s black Next.js tile and title;
+   those values remain content-owned.
+9. Typegen runs after the GROQ projection changes so the route compiles against generated result
+   types, with no handwritten query result types.
 
 ## Files to touch
 
 - `app/courses/[slug]/page.tsx` — new. Server component: fetch, `notFound()`, `generateMetadata`,
   `generateStaticParams`, hero, outcomes panel, course content, sticky bar, decoration.
 - `components/course/course-hero.tsx` — new. Cover, badge, title, summary, meta row, CTAs.
+- `components/course/course-bookmark.tsx` — new. Local bookmark toggle; it does not persist or write.
 - `components/course/learning-outcomes.tsx` — new. Panel + outcome cards + the icon map.
 - `components/course/course-content.tsx` — new, `"use client"`. Module accordion + show-all toggle.
 - `components/course/course-progress-bar.tsx` — new, sticky bar (presentational).
 - `lib/format.ts` — new. `formatDuration(seconds)` → `18h 24m` / `45m`, `formatCount(n)` → `2.1k`,
-  `formatLevel(level)` → `Intermediate`, `moduleLabel` / `lessonLabel` helpers.
+  and `formatLevel(level)` → `Intermediate`.
 - `next.config.ts` — add `images.remotePatterns` for `cdn.sanity.io`.
 - `lib/routes.ts` — new. `coursesHref` / `courseHref` / `lessonHref`, so link shapes live in one
   place as routes land.
-- `sanity.types.ts` — regenerated as a check; already current, so unchanged (do not hand-edit).
-- No changes to `sanity/lib/queries.ts`, the Studio schema, or the seed.
+- `sanity/lib/queries.ts` — add the required lesson count and per-module durations.
+- `sanity.types.ts` — regenerate from the updated query; do not hand-edit.
+- No changes to the Studio schema or the seed.
 
 ## Requirements
 
@@ -165,7 +166,7 @@ content column. Outer frame and header come from the existing `PageFrame` / `Sit
 6. An unknown slug returns the 404 page.
 7. Desktop layout matches `design/vertex-course.png`; the page is usable at 375px wide with no
    horizontal scroll.
-8. `sanity.types.ts` contains `COURSE_BY_SLUG_QUERYResult`, and the page compiles against it with
+8. `sanity.types.ts` contains `COURSE_BY_SLUG_QUERY_RESULT`, and the page compiles against it with
    no `any` and no hand-written result types.
 
 ## Checks to run
@@ -192,4 +193,4 @@ From the repo root unless stated:
    the first lesson.
 7. Resize to 375px: hero stacks, outcomes go single column, nothing scrolls horizontally.
 8. Open `/courses/does-not-exist` and confirm the 404 page.
-9. Visit `/` and click through a course card to confirm the home page's links resolve.
+9. Visit `/` to confirm the existing home page remains unaffected.

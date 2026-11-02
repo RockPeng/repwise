@@ -50,6 +50,7 @@ export const COURSE_BY_SLUG_QUERY = defineQuery(`
       _key,
       title,
       summary,
+      "durationSeconds": math::sum(lessons[]->duration),
       lessons[]{
         _key,
         "_id": @->_id,
@@ -60,6 +61,7 @@ export const COURSE_BY_SLUG_QUERY = defineQuery(`
       }
     },
     "moduleCount": count(modules),
+    "lessonCount": count(modules[].lessons[]),
     "durationSeconds": math::sum(modules[].lessons[]->duration)
   }
 `)

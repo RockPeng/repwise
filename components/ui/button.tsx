@@ -32,7 +32,7 @@ type ButtonProps =
       onClick?: MouseEventHandler<HTMLButtonElement>;
     });
 
-const buttonClasses: Record<ButtonVariant, string> = {
+export const buttonClasses: Record<ButtonVariant, string> = {
   primary: "vertex-button--primary",
   secondary: "vertex-button--secondary",
   tertiary: "vertex-button--tertiary",
