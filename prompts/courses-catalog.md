@@ -1,79 +1,76 @@
-# Implementation prompt: All Courses catalog
+# Implementation prompt: All Courses page
 
 ## Goal
 
-Build `/courses`, the catalog the home page's "View all courses" link and the course page's
-breadcrumb already point at. Every seeded course, read from Sanity, in the home page's existing card
-grid. Deliberately simple: no filters, no search, no sort, no pagination.
+Implement `/courses` as a simple, read-only catalog of courses from Sanity. The home page already
+links there and the course detail page already uses it as its breadcrumb destination.
 
-## Skills and docs read
+## Skills and guidance read
 
-- `AGENTS.md` — §3 (no design image exists for this page, so reuse existing components and Tailwind
-  patterns rather than inventing a look), §5 (read-only page, server-side Sanity), §7, §13, §14
-  ("keep it small").
-- Carried over from `prompts/course-page.md` and `prompts/home-courses-from-sanity.md`: the query
-  layer, TypeGen types, `next/image` + `cdn.sanity.io`, and the card grid markup.
+- `AGENTS.md` — reuse existing UI, keep Sanity reads server-side, and keep the feature scoped.
+- `sanity-best-practices` — Next.js App Router integration and GROQ query practices.
+- Before coding, read the current Next.js guide under `node_modules/next/dist/docs/` for the
+  App Router page, metadata, and data-fetching patterns.
 
 ## Code inspected
 
-- `app/page.tsx` — the card grid this page reuses verbatim: `sm:grid-cols-2 lg:grid-cols-3`,
-  `CourseCard layout="stacked"`, cover image as the 72px tile, meta from `lib/format`.
-- `sanity/lib/queries.ts` — `COURSES_LIST_QUERY`, popular first then alphabetical. **No query
-  changes needed.**
-- `components/layout/page-frame.tsx`, `layout/site-header.tsx` (`activeHref`), `nav/breadcrumbs.tsx`,
-  `cards/course-card.tsx`, `home/chart-decoration.tsx`.
-- `lib/format.ts`, `lib/routes.ts` — `coursesHref`, `courseHref`, `formatLevel`, `formatDuration`,
-  `pluralize`.
+- `app/page.tsx` — existing Sanity fetch, stacked card markup, image rendering, and responsive grid.
+- `app/courses/[slug]/page.tsx` — page frame, site header, course-page container, and breadcrumb.
+- `components/cards/course-card.tsx` — existing stacked card component.
+- `components/nav/breadcrumbs.tsx` — current-page breadcrumb behavior.
+- `sanity/lib/queries.ts` — `COURSES_LIST_QUERY` already returns course details and is ordered
+  popular-first, then by title.
+- `sanity/lib/fetch.ts` — server-only `sanityFetch` and course/lesson cache tags.
+- `sanity/lib/image.ts`, `lib/format.ts`, and `lib/routes.ts` — existing image, metadata-formatting,
+  and course-link helpers.
+- `app/globals.css` — existing stacked card and responsive catalog-grid styles.
 
 ## Decisions and assumptions
 
-1. **No design reference exists for this page**, so it borrows the home page's section header
-   (Playfair heading + card grid) and the course page's frame, padding, and breadcrumb. Nothing new
-   is designed.
-2. **No filters, sort, or pagination** — the user asked to keep it simple, and `CATEGORIES_LIST_QUERY`
-   stays unused until a design calls for it.
-3. **All courses render**, unlike the home page's three-card preview.
-4. A course count sits beside the heading, mirroring the course page's right-aligned meta line.
-5. The card grid is extracted into `components/cards/course-grid.tsx` so the home page and the
-   catalog cannot drift apart; `app/page.tsx` is refactored to use it with a `limit`.
+1. Keep the scope to the new catalog route. Do not refactor the home page or extract a shared grid.
+2. Display every returned course that has both a title and slug; do not add filters, search, sorting,
+   or pagination.
+3. Reuse the current stacked `CourseCard`, Sanity cover image treatment, and responsive grid styles.
+4. Include a short heading, course count, breadcrumb, and empty state. Do not introduce new visual
+   patterns or additional components.
+5. Add page metadata. Leave Sanity queries, schemas, seed data, and existing pages unchanged.
 
-## Files to touch
+## Files expected to change
 
-- `app/courses/page.tsx` — new. Server component: fetch, breadcrumb, heading + count, grid, empty
-  state.
-- `components/cards/course-grid.tsx` — new. The shared grid, moved out of `app/page.tsx`.
-- `app/page.tsx` — use the shared grid instead of its inline copy.
-- No changes to the queries, the schema, or the seed.
+- `app/courses/page.tsx` — new server-rendered catalog page.
+- `prompts/courses-catalog.md` — this approved implementation scope.
 
 ## Requirements
 
-- Read via `sanityFetch({query: COURSES_LIST_QUERY, tags: [CACHE_TAGS.course, CACHE_TAGS.lesson]})`.
-- `generateMetadata`/`metadata` gives the page a title and description.
-- Courses without a slug are skipped; an empty result shows a short empty state instead of a bare
-  grid.
-- Responsive down to mobile with no horizontal scroll; cards keep their existing focus rings.
-- Breadcrumb: `All Courses` as the current page (no link back to itself).
+- Fetch with `sanityFetch`, `COURSES_LIST_QUERY`, and
+  `tags: [CACHE_TAGS.course, CACHE_TAGS.lesson]`.
+- Render course title, summary, image, level, duration, and module count when available.
+- Link each card to its matching route with `courseHref`.
+- Show `All Courses` as the current breadcrumb item, not as a link to itself.
+- Show a concise empty state if no renderable courses are returned.
+- Preserve keyboard focus visibility and mobile-friendly grid behavior using existing styles.
 
 ## Security considerations
 
-- Same as the other pages: server-only client and token, no writes, only `NEXT_PUBLIC_*` values
-  reach the browser through `urlFor`.
+- Keep all Sanity access on the server through the existing `sanityFetch` helper.
+- Do not add a browser-side fetch, API route, or write operation.
+- Do not expose Sanity tokens or private configuration.
 
 ## Acceptance criteria
 
-1. `/courses` lists all ten seeded courses with cover art, level, duration, and module count.
-2. Each card links to a course page that loads.
-3. The home page's "View all courses" link and the course page's "All Courses" breadcrumb both
-   resolve — no 404s left in the flows built so far.
-4. The home page still shows exactly three cards and looks unchanged.
+1. `/courses` renders all renderable courses returned by the existing Sanity query.
+2. Course cards show available Sanity content and navigate to their matching detail page.
+3. The existing homepage and course detail page remain unchanged.
+4. The page has a useful title and description and handles an empty result.
+5. Type check, lint, and production build pass.
 
-## Checks to run
+## Checks
 
-`npm run typecheck`, `npm run lint`, `npm run build`, then `npm run dev`.
+From the repository root, run `npm run typecheck`, `npm run lint`, and `npm run build`.
 
 ## Manual test steps
 
-1. Open `http://localhost:3000/courses` and count ten cards.
-2. Click a card, then use the breadcrumb to come back.
-3. From `/`, click "View all courses".
-4. Resize to 375px and confirm no horizontal scroll.
+1. Open `/courses` and confirm all catalog cards appear.
+2. Open a card and use its breadcrumb to return to `/courses`.
+3. Open `/` and follow “View all courses” to the catalog.
+4. Check a narrow viewport for horizontal overflow.
