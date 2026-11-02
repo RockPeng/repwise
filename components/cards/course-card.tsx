@@ -4,10 +4,10 @@ import { Card } from "@/components/ui/card";
 
 type CourseCardProps = {
   title: string;
-  description: string;
-  level: string;
-  duration: string;
-  modules: number;
+  description?: string | null;
+  level?: string | null;
+  duration?: string | null;
+  modules?: number | null;
   logo?: ReactNode;
   layout?: "row" | "stacked";
 };
@@ -31,23 +31,31 @@ export function CourseCard({
         </div>
         <div className="vertex-course-card__copy">
           <h3>{title}</h3>
-          <p>{description}</p>
+          {description && <p>{description}</p>}
         </div>
       </div>
-      <div className="vertex-card-meta">
-        <span>
-          <BarChart3 size={14} aria-hidden="true" />
-          {level}
-        </span>
-        <span>
-          <Clock3 size={14} aria-hidden="true" />
-          {duration}
-        </span>
-        <span>
-          <Layers3 size={14} aria-hidden="true" />
-          {modules} modules
-        </span>
-      </div>
+      {(level || duration || modules != null) && (
+        <div className="vertex-card-meta">
+          {level && (
+            <span>
+              <BarChart3 size={14} aria-hidden="true" />
+              {level}
+            </span>
+          )}
+          {duration && (
+            <span>
+              <Clock3 size={14} aria-hidden="true" />
+              {duration}
+            </span>
+          )}
+          {modules != null && (
+            <span>
+              <Layers3 size={14} aria-hidden="true" />
+              {modules} {modules === 1 ? "module" : "modules"}
+            </span>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
