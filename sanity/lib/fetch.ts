@@ -2,6 +2,7 @@ import 'server-only'
 
 import { cacheLife, cacheTag } from 'next/cache'
 import type { ClientParams } from '@sanity/client'
+import { logContentOperation, SeverityNumber } from '@/lib/posthog-logger'
 import { client } from './client'
 
 const DEFAULT_REVALIDATE_SECONDS = 60 * 60
@@ -45,5 +46,33 @@ export async function sanityFetch<const QueryString extends string>({
     })
   }
 
-  return client.fetch(query, params ?? {})
+  const startedAt = Date.now()
+
+  try {
+    const result = await client.fetch(query, params ?? {})
+    await logContentOperation({
+      body: 'content fetch completed',
+      attributes: {
+        event: 'content.fetch',
+        status: 'success',
+        duration_ms: Date.now() - startedAt,
+        cache_tag_count: tags.length,
+        cache_policy: revalidateSeconds === false ? 'persistent' : 'revalidate',
+      },
+    })
+    return result
+  } catch (error) {
+    await logContentOperation({
+      body: 'content fetch completed',
+      severityNumber: SeverityNumber.ERROR,
+      attributes: {
+        event: 'content.fetch',
+        status: 'failed',
+        duration_ms: Date.now() - startedAt,
+        cache_tag_count: tags.length,
+        error_type: error instanceof Error ? error.name : 'UnknownError',
+      },
+    })
+    throw error
+  }
 }

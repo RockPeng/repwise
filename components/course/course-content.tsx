@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import type { COURSE_BY_SLUG_QUERY_RESULT } from "@/sanity.types";
 import { formatDuration } from "@/lib/format";
 import { lessonHref } from "@/lib/routes";
+import { capturePostHogEvent } from "@/lib/posthog-client";
 import { Badge } from "@/components/ui/badge";
 
 type Course = NonNullable<COURSE_BY_SLUG_QUERY_RESULT>;
@@ -50,11 +51,15 @@ export function CourseContent({
                 aria-label={module.title ?? `Module ${index + 1}`}
                 aria-expanded={expanded}
                 aria-controls={panelId}
-                onClick={() =>
-                  setOpenModule((current) =>
-                    current === module._key ? null : module._key,
-                  )
-                }
+                onClick={() => {
+                  const nextExpanded = !expanded;
+                  setOpenModule(nextExpanded ? module._key : null);
+                  capturePostHogEvent("course_module_toggled", {
+                    expanded: nextExpanded,
+                    module_position: index + 1,
+                    lesson_count: lessons.length,
+                  });
+                }}
               >
                 <span className="vertex-course-module__number" aria-hidden="true">
                   {index + 1}
@@ -86,7 +91,18 @@ export function CourseContent({
                     </span>
                     <div className="vertex-course-lesson__copy">
                       {lesson.slug && lesson.title ? (
-                        <Link href={lessonHref(lesson.slug)}>{lesson.title}</Link>
+                        <Link
+                          href={lessonHref(lesson.slug)}
+                          onClick={() =>
+                            capturePostHogEvent("lesson_selected", {
+                              module_position: index + 1,
+                              lesson_position: lessonIndex + 1,
+                              free_preview: Boolean(lesson.freePreview),
+                            })
+                          }
+                        >
+                          {lesson.title}
+                        </Link>
                       ) : (
                         lesson.title && <span>{lesson.title}</span>
                       )}
@@ -110,7 +126,14 @@ export function CourseContent({
         <button
           className="vertex-course-content__show-all"
           type="button"
-          onClick={() => setShowAll((current) => !current)}
+          onClick={() => {
+            const nextShowAll = !showAll;
+            setShowAll(nextShowAll);
+            capturePostHogEvent("course_modules_visibility_toggled", {
+              showing_all: nextShowAll,
+              module_count: modules.length,
+            });
+          }}
         >
           {showAll ? "Show fewer modules" : `Show all ${modules.length} modules`}
           <ChevronDown
