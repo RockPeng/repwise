@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot } from "react-dom/client";
 import { act } from "react";
 import Home from "./page";
+import { THEME_STORAGE_KEY, resetTheme } from "@/lib/theme";
 
 /**
  * Verifies the server-rendered markup matches the first client render, so
@@ -12,6 +13,11 @@ import Home from "./page";
  * its hydration pass.
  */
 describe("hydration", () => {
+  afterEach(() => {
+    resetTheme();
+    vi.restoreAllMocks();
+  });
+
   it("hydrates without a mismatch", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -32,5 +38,20 @@ describe("hydration", () => {
     expect(mismatch).toBe(false);
 
     consoleError.mockRestore();
+  });
+
+  it("keeps the stored theme across hydration", async () => {
+    window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
+
+    const html = renderToString(<Home />);
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    await act(async () => {
+      hydrateRoot(container, <Home />);
+    });
+
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
   });
 });

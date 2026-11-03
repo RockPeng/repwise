@@ -44,6 +44,42 @@ export function emptyStore(): Store {
   return { habits: [], checkIns: {} };
 }
 
+/**
+ * Reads a raw setting value.
+ *
+ * Returns null when the value is absent or storage is unavailable, so callers
+ * cannot tell the two apart — for a setting, both mean "no preference".
+ */
+export function readSetting(key: string): string | null {
+  const storage = getStorage();
+  if (!storage) return null;
+
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Writes a raw setting value.
+ *
+ * Returns false when the write failed (quota exceeded, private mode). The
+ * value is still applied in memory by the caller, so the session stays usable
+ * even though the choice will not survive a reload.
+ */
+export function writeSetting(key: string, value: string): boolean {
+  const storage = getStorage();
+  if (!storage) return false;
+
+  try {
+    storage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function isValidStore(value: unknown): value is Store {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<Store>;

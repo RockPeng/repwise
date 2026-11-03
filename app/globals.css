@@ -1,8 +1,51 @@
 @import "tailwindcss";
 
-:root {
+/*
+ * Theming
+ * -------
+ * The theme is a *preference* — "light", "dark", or "system" — stored on
+ * `<html data-theme="...">`. CSS resolves "system" against the OS, so:
+ *
+ * - The OS preference is honoured with no JavaScript at all.
+ * - An OS change is picked up live, for free.
+ * - The inline script in the root layout and the stylesheet always agree,
+ *   because they read the same attribute.
+ *
+ * The Tailwind `dark:` variant is redefined against the same attribute:
+ * `data-theme="dark"` is dark regardless of the OS, and `data-theme="system"`
+ * is dark when the OS prefers dark.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where([data-theme="system"], [data-theme="system"] *) {
+      @slot;
+    }
+  }
+}
+
+:root,
+[data-theme="light"] {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
@@ -10,13 +53,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

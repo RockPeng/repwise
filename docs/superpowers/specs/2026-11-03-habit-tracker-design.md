@@ -99,7 +99,13 @@ the user mid-session.
 - Responsive: below `sm`, the grid scrolls horizontally; the habit-name column
   stays fixed while the day columns scroll.
 
-Dark mode follows `prefers-color-scheme`, using Tailwind's `dark:` variants.
+A theme toggle in the header cycles **System → Light → Dark → System**. The
+choice is stored under the `theme.v1` key and written to `<html data-theme>`.
+Tailwind's `dark:` variant is redefined against that attribute, and CSS
+resolves `system` against `prefers-color-scheme` — so the OS preference is
+honoured with no JavaScript, and an OS change is picked up live. An inline
+script in the root layout applies the stored theme before the first paint, so
+there is no flash of the wrong mode.
 
 ## Testing
 

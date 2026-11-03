@@ -3,6 +3,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import HabitForm from "@/components/HabitForm";
 import HabitGrid from "@/components/HabitGrid";
+import ThemeToggle from "@/components/ThemeToggle";
 import { lastNDays } from "@/lib/dates";
 import {
   addHabit,
@@ -45,14 +46,17 @@ export default function Home() {
             Check off each day. Last {DAY_WINDOW} days shown.
           </p>
         </div>
-        {hydrated && store.habits.length > 0 && (
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-              {doneToday} of {store.habits.length}
-            </span>{" "}
-            done today
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {hydrated && store.habits.length > 0 && (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {doneToday} of {store.habits.length}
+              </span>{" "}
+              done today
+            </p>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
       <HabitForm onAdd={addHabit} />
