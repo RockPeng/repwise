@@ -90,10 +90,17 @@ export const LESSON_BY_SLUG_QUERY = defineQuery(`
       _id,
       title,
       "slug": slug.current,
+      coverImage {
+        ...,
+        asset->{_id, url, metadata{dimensions, lqip}},
+        alt
+      },
+      level,
       instructor->{_id, name, "slug": slug.current, photo{..., asset->{_id, url}, alt}},
       modules[]{
         _key,
         title,
+        "durationSeconds": math::sum(lessons[]->duration),
         lessons[]{
           _key,
           "_id": @->_id,
