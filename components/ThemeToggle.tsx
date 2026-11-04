@@ -22,7 +22,7 @@ import {
  * server and the hydration pass agree on `system` and the real value arrives
  * on the next render — no markup mismatch.
  */
-export default function ThemeToggle() {
+export default function ThemeToggle({ className = "" }: { className?: string }) {
   const theme = useSyncExternalStore(subscribe, getTheme, getServerTheme);
 
   // Re-apply the stored theme after React resets `<html>`'s attributes on the
@@ -43,7 +43,7 @@ export default function ThemeToggle() {
       onClick={handleClick}
       aria-label={`Theme: ${theme}`}
       title={`Theme: ${theme}`}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-300 text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-500 dark:hover:text-neutral-100"
+      className={`inline-flex size-9 items-center justify-center rounded-full border border-line text-ink-2 transition-colors hover:border-line-2 hover:text-ink ${className}`}
     >
       <ThemeIcon theme={theme} />
     </button>
@@ -63,7 +63,7 @@ function ThemeIcon({ theme }: { theme: Theme }) {
       >
         <circle cx="8" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.5" />
         <path
-          d="M8 1v1.5M8 13.5V15M15 8h-1.5M2.5 8H1M12.95 3.05l-1.06 1.06M4.11 11.89l-1.06 1.06M12.95 12.95l-1.06-1.06M4.11 4.11L3.05 3.05"
+          d="M8 1v1.5M8 13.5V15M15 8h-1.5M2.5 8H1M12.95 3.05l-1.06 1.06M4.11 11.89l-1.06 1.06M12.95 12.95l-1.06-1.06M4.11 4.11 3.05 3.05"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"

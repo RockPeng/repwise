@@ -1,22 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import InlineScript from "@/components/InlineScript";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * Archivo carries a width axis. Pushed wide it gives headlines the flat,
+ * set-in-a-row feel of sportswear type; Inter handles everything that has to
+ * be read rather than looked at.
+ */
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  axes: ["wdth"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Habits",
-  description: "A simple habit tracker",
+  title: {
+    default: "FitCoach — train with a coach who watches the numbers",
+    template: "%s · FitCoach",
+  },
+  description:
+    "Find a coach, buy their programme, book a private session. Every lesson, every rep and every week tracked in one place.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -25,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       data-theme="system"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
         {/*
@@ -35,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         */}
         <InlineScript html={THEME_INIT_SCRIPT} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full bg-surface-0 font-sans text-ink">{children}</body>
     </html>
   );
 }

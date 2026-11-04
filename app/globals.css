@@ -14,6 +14,11 @@
  * The Tailwind `dark:` variant is redefined against the same attribute:
  * `data-theme="dark"` is dark regardless of the OS, and `data-theme="system"`
  * is dark when the OS prefers dark.
+ *
+ * Everything below is expressed as *semantic* tokens (surface, ink, line,
+ * accent) rather than literal colours. A component that says `bg-surface-1`
+ * is correct in both themes without a single `dark:` variant, which is what
+ * keeps nineteen routes in step.
  */
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *) {
@@ -27,36 +32,236 @@
   }
 }
 
+/*
+ * Light — "the gym in daylight". Cool paper, not warm cream: the accent is
+ * the only saturated colour in the product and it has to be the loudest
+ * thing on the page in both themes.
+ */
 :root,
 [data-theme="light"] {
-  --background: #ffffff;
-  --foreground: #171717;
   color-scheme: light;
+
+  --surface-0: #eff3f1;
+  --surface-1: #ffffff;
+  --surface-2: #e6ece8;
+  --line: #d7dfda;
+  --line-2: #b4c1ba;
+
+  --ink: #0a1210;
+  --ink-2: #47574f;
+  --ink-3: #74847c;
+
+  --accent: #0a7d43;
+  --accent-solid: #16b364;
+  --accent-ink: #04170d;
+  --accent-soft: rgba(22, 179, 100, 0.12);
+
+  --warn: #8f620e;
+  --warn-soft: rgba(232, 163, 61, 0.2);
+
+  --danger: #b13825;
+  --danger-soft: rgba(229, 83, 61, 0.12);
 }
 
+/* Dark — the default expression of the brand. */
 [data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
   color-scheme: dark;
+
+  --surface-0: #0a0c0b;
+  --surface-1: #101513;
+  --surface-2: #18201d;
+  --line: #232b28;
+  --line-2: #36413c;
+
+  --ink: #eef4f0;
+  --ink-2: #98a7a0;
+  --ink-3: #64716b;
+
+  --accent: #3ce08a;
+  --accent-solid: #3ce08a;
+  --accent-ink: #04160c;
+  --accent-soft: rgba(60, 224, 138, 0.12);
+
+  --warn: #e8a33d;
+  --warn-soft: rgba(232, 163, 61, 0.14);
+
+  --danger: #e5533d;
+  --danger-soft: rgba(229, 83, 61, 0.14);
 }
 
+/* "system" inherits the light tokens from `:root` and flips on a dark OS. */
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
-    --background: #0a0a0a;
-    --foreground: #ededed;
     color-scheme: dark;
+
+    --surface-0: #0a0c0b;
+    --surface-1: #101513;
+    --surface-2: #18201d;
+    --line: #232b28;
+    --line-2: #36413c;
+
+    --ink: #eef4f0;
+    --ink-2: #98a7a0;
+    --ink-3: #64716b;
+
+    --accent: #3ce08a;
+    --accent-solid: #3ce08a;
+    --accent-ink: #04160c;
+    --accent-soft: rgba(60, 224, 138, 0.12);
+
+    --warn: #e8a33d;
+    --warn-soft: rgba(232, 163, 61, 0.14);
+
+    --danger: #e5533d;
+    --danger-soft: rgba(229, 83, 61, 0.14);
   }
 }
 
+/*
+ * Tailwind bridge. `inline` keeps the generated utilities pointing at the
+ * custom properties instead of freezing their values, so a theme switch is
+ * a single attribute change with no re-render.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-archivo);
+
+  --radius-panel: 12px;
+  --radius-field: 10px;
+
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html {
+  background: var(--surface-0);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-0);
+  color: var(--ink);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "cv05" 1, "ss03" 1;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/*
+ * Focus is a bright outline rather than a shadow, so it survives on top of
+ * photography and on the accent fill.
+ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/*
+ * The signature: a cut corner. Media frames are sharp and chamfered, so the
+ * page never reads as a stack of rounded cards. The cut is sized per frame
+ * through `--cut`.
+ */
+@utility chamfer-bl {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    var(--cut, 1.75rem) 100%,
+    0 calc(100% - var(--cut, 1.75rem))
+  );
+}
+
+@utility chamfer-tl {
+  clip-path: polygon(
+    var(--cut, 1.75rem) 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 var(--cut, 1.75rem)
+  );
+}
+
+/*
+ * Archivo ships a width axis. Pushing it wide gives headlines the flat,
+ * set-in-a-row feel of sportswear type; pulling it in tight gives numerals
+ * a condensed, scoreboard quality.
+ */
+@utility stretch-wide {
+  font-variation-settings: "wdth" 112;
+}
+
+@utility stretch-tight {
+  font-variation-settings: "wdth" 88;
+}
+
+/* Figures that line up in a column have to be tabular to line up. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* A faint engineering grid, used behind the hero and the console header. */
+@utility grid-lines {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--line) 55%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--line) 55%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 4.5rem 4.5rem;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * A hairline that reads as a rule rather than a border. Used to separate
+ * rows in dense tables where a boxed card would be too heavy.
+ */
+@utility hairline {
+  border-color: var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
